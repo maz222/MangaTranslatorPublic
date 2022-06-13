@@ -6,5 +6,3 @@ Users can upload any number of their own images, and browse them (with translati
 Uses React, Express, [Axios](https://axios-http.com/), [Styled Components](https://styled-components.com/), NodeJS, and an HTML5 Canvas element.
 
 Hosted on heroku [here](https://translate-manga.herokuapp.com/) (may take a minute to load due to Free Tier inactivity).
-
-Enter 'gandalf' when prompted
