@@ -1,0 +1,54 @@
+#root body {
+  width:100%;
+  height:100%;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.columnPage {
+  width:100%;
+  height:100%;
+  background-color: rgb(240,240,240);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.banner {
+  width:calc(100% - 100px);
+  height:50px;
+  background-color: #282c34;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding:0 50px 0 50px;
+}
+
+.banner h3 {
+  color: white;;
+}
+
+.banner button {
+  height:calc(100% - 40px);
+  padding:20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border:0;
+  background-color: rgba(0,0,0,0);
+  color:white;
+}
+
+.banner button:hover {
+  background-color: rgba(0,0,0,.25);
+  cursor:pointer;
+}
