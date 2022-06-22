@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 import { useState } from 'react';
 
+//Simple blank, blue page for displaying the input
 const Page = styled.div`
     width:100%;
     height:100%;
@@ -21,7 +22,18 @@ const Page = styled.div`
         font-size:1.25em;
     }
 `;
+/*
+    Simple Element that renders a password input field.
+    Upon entering the correct password, renders the specified component instead.
 
+    Props:
+        password : (string) the desired password the user must enter
+        child : (React Component) the component to be rendered once the right password is entered
+
+    State:
+        password : (string) the user input
+        success : (bool) whether the user has entered the correct password or not
+*/
 function PasswordWrapper(props) {
     const [password,setPassword] = useState("");
     const [success,setSuccess] = useState(false);

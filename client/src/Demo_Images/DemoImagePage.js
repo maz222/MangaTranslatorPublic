@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useEffect } from 'react';
 import ProjectImages from '../Project_Images/ProjectImages';
 
-
+//Simple blank, blue page for when the images are loading in
 const LoadingPage = styled.div`
     width:100%;
     height:100%;
@@ -18,12 +18,21 @@ const LoadingPage = styled.div`
     }
 `;
 
+/*
+    Sample Project Images page that uses a provided set of images for demo purposes
+    
+    Props:
+        None
+    
+    State:
+        loaded : (bool) whether the images have fully loaded or not
+        demoImages : ([Image,...]) array of images to be translated
+*/
 function DemoImagePage(props) {
     const [loaded,setLoaded] = useState(false);
     const [demoImages,setDemoImages] = useState([]);
     //get array of Blob objects for the demo images
     const fetchImages = () => {
-        //console.log("fetching");
         const fileNames = ["Cover.jpg","IMG_189.jpg","IMG_190.jpg","IMG_191.jpg","IMG_192.jpg","IMG_193.jpg",
         "IMG_194.jpg","IMG_195.jpg","IMG_196.jpg","IMG_197.jpg","IMG_198.jpg","IMG_199.jpg","IMG_200.jpg",
         "IMG_201.jpg","IMG_202.jpg","IMG_203.jpg"];
@@ -33,7 +42,7 @@ function DemoImagePage(props) {
         for(var i in fileNames) {
             filePromises.push(axios.get("/API/demoFile", {params:{fileName:fileNames[i]},responseType:"blob"}));
         }
-        //return successful files once all promises have finished
+        //set the image array to the loaded image and signal loading is complete
         Promise.allSettled(filePromises).then((files) => {
             for(var i in files) {
                 if(files[i].status == 'fulfilled') {
