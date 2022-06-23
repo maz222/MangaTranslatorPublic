@@ -3,6 +3,7 @@ import React, {useEffect, useState} from 'react';
 
 import {Link} from "react-router-dom";
 
+//base Image Card, with a solid background and image scaled to fit the center of the card
 const ImageCard = styled.div`
     position:relative;
     width:100%;
@@ -33,6 +34,7 @@ const ImageCard = styled.div`
     }
 `;
 
+//activated image card with 'open' and 'delete' icons, and a shadow overlay
 const ActiveImageCard = styled(ImageCard)`
     .deleteButton {
         position:absolute;
@@ -77,11 +79,22 @@ const ActiveImageCard = styled(ImageCard)`
     }
 `;
 
+/*
+    A element used to represent a user uploaded image in the image upload grid area
 
+    Props:
+        active: (bool) whether the item has been clicked on or not
+        toggleActive : (function) callback function for when user clicks on the item
+            - takes a single 'index' parameter referencing which image in the overall array to toggle active
+        index : (int) the index of this image in the overall image array (used in the toggleActive() callback)
+    
+        State:
+        image: (Image) the scaled image thumbnail to be displayed
+*/
 function ImageItem(props) {
     const [image, setImage] = useState(null);
     const containerRef = React.useRef(null);
-
+    //on mount, load the provided image to display as a thumbnail
     useEffect(() => {
         var isCancel = false;
         const fileReader = new FileReader();

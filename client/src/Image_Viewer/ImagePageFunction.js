@@ -6,9 +6,11 @@ import axios from 'axios';
 
 import ImageCanvas from './ImageCanvas';
 
+//default text
 const readyText = "Click on a text box to see the translation!";
 const loadingText = "Translating...";
 
+//basic empty, blue page with flex box centering
 const StyledPage = styled.div`
     width:100%;
     height:100%;
@@ -18,6 +20,7 @@ const StyledPage = styled.div`
     background-color:#0F1831;
 `;
 
+//the top banner
 const Banner = styled.div`
     height:40px;
     width:100%;
@@ -34,6 +37,7 @@ const Banner = styled.div`
     }
 `;
 
+//the navigation menu for browsing images (next image, previous image)
 const NavMenu = styled.div`
     display:flex;
     justify-content:space-between;
@@ -58,6 +62,7 @@ const NavMenu = styled.div`
     }
 `;
 
+//text bar for displaying the current active text box
 const TextBar = styled.div`
     display:flex;
     justify-content:center;
@@ -77,12 +82,28 @@ const TextBar = styled.div`
     }
 `;
 
-//props
-    //images
-    //imageIndex
-//state
-    //text : [Text]
-        //Text : {translated:"",raw:"",rect:{x,y,width,height}}
+/*
+    The over page element for viewing translated images.
+    Contains a navigation bar, the canvas element (with image and text boxes), and a bottom bar for displaying the translated text
+
+    Props:
+        (None, uses location to pass data instead)
+
+    Location State: 
+        images : [(Image),...] array of user images
+        imageIndex : (int) the index of the image currently being displayed
+
+    State:
+        image: (Image) the current active image being displayed
+        text: ({raw,translated,rect},...) array of objects, each representing a text detection within the image, to be overlayed over the image
+            - raw : (string) the raw, untranslated text detected in the image
+            - translated : (string) the translated text
+            - rect : ({x,y,width,height}) the positional data for the text. x/y are top left corner. in pixels.        activeText:
+        APIError: (bool) whether the client has encountered an error when calling the API or not
+        canvasDimensions: {width, height} the dimensions of the canvas element, in pixels
+        baseDimensions: {width, height} the dimensions of the container element for the canvas. used to help determine the scaled dimensions of the canvas
+        containerRef : (DOM Reference) a reference to the container element for the canvas (used to get baseDimensions)
+*/
 function ImagePageFunction(props) {
     const location = useLocation();
     const containerRef = useRef();
@@ -92,21 +113,24 @@ function ImagePageFunction(props) {
     const [activeText, setActiveText] = useState(null);
     const [APIError, setError] = useState(false);
     const [canvasDimensions, setCanvasDimentions] = useState(null)
+    const [baseDimensions, setBaseDimensions] = useState(null);
 
+    //loads a single image using fileReader
     const loadFile = (file) => {
         setError(false);
         var isCancel = false;
         const fileReader = new FileReader();
         fileReader.onload = (e) => {
             var img = new Image;
+            //once the image has finished loading
             img.onload = () => {
-                //console.log("image loaded");
+                //resize the canvas to fit the image and container dimensions
                 setCanvasDimentions(calculateCanvasDimensions(img));
                 setImage(img);
+                //translate the actual image text
                 translateImage(file);
             }
             img.src = fileReader.result;
-            //translate image here!!!
         }
         fileReader.readAsDataURL(file);
         return() => {
@@ -116,25 +140,26 @@ function ImagePageFunction(props) {
             }
         }
     }
+    //calls the API to get the translated text within an image
     const translateImage = (image) => {
-        //console.log("translating?");
-        //console.log(image);
         const API_URL = "/api/detectText";
         const form = new FormData();
         form.append('file',image);
-        //form.append('language','en');
+        //make a post request to the API, passing in the image file data (detects data in the image using Google Cloudvision)
         axios.post(API_URL,form,{headers: {"Content-Type":"multipart/form-data"}}).then((res) => {
-            console.log(res);
+            //create a temp array of the raw detected text in the image
             var targetText = [];
             for(var t in res.data) {
                 targetText.push(res.data[t].raw);
             }
+            //make a get request to the API, passing the raw text and desired language (translates the raw text using Bing Translate)
             axios.get('/api/translateText', {
                 params: {
                     text:targetText,
                     toLanguage:"en"
                 }
             }).then((res2) => {
+                //once loaded, pair the translated text with the raw text
                 for(var d in res2.data) {
                     res.data[d].translated = res2.data[d].translations[0].text;
                 }
@@ -143,28 +168,40 @@ function ImagePageFunction(props) {
                 setError(true);
             })
             setText(res.data);
-            //console.log(res.data);
         }).catch((error) => {
             console.log(error);
             setError(true);
         });
     }
+    //once the component has been mounted, use the canvas container reference to set the base dimensions used to calculate the canvas dimensions
     useEffect(() => {
         setActiveText(null);
         setText(null);
-        loadFile(location.state.images[location.state.imageIndex]);
+        setBaseDimensions(containerRef.current.getBoundingClientRect());
     },[containerRef]);
+    //onced the base dimensions have been set or changed, resize the canvas, then load and display the image in the canvas
+    useEffect(() => {
+        console.log(location.state.imageIndex);
+        if(baseDimensions != null) {
+            loadFile(location.state.images[location.state.imageIndex]);
+        }
+    },[baseDimensions]);
+    //if the location data changes (when user navigates to a new image), load and display the new image / adjust canvas
     useEffect(() => {
         if(containerRef != null) {
             setActiveText(null);
             setText(null);
-            loadFile(location.state.images[location.state.imageIndex]);
+            if(baseDimensions != null) {
+                loadFile(location.state.images[location.state.imageIndex]);
+            }
         }
     },[location])
-
+    //caculates the actual dimensions of the canvas element given the dimensions of it's container, and an image
     const calculateCanvasDimensions = (img) => {
-        const parentDimensions = containerRef.current.getBoundingClientRect();
+        const parentDimensions = baseDimensions;
+        //10px margin around the image
         const margin = 10;
+        //get the scaled aspect ratio of the image, scaled to maintain the width of the image
         const aspectRatio = Math.min((parentDimensions.width-margin)/img.width,1);
         const canvasDimensions = {width:Math.max(parentDimensions.width,img.width*aspectRatio+margin*2),height:Math.max(parentDimensions.height,img.height*aspectRatio+margin*2)};
         return canvasDimensions;
@@ -173,7 +210,7 @@ function ImagePageFunction(props) {
     const updateActiveText = (text) => {
         setActiveText(text);
     }
-
+    //the container element for the canvas, used to help manage the dimensions of the canvas via a DOM reference
     const tempCanvasDimensions = canvasDimensions != null ? canvasDimensions : {width:null,height:null};
     const CanvasContainer = styled.div`
         background-color: rgb(200,200,200);
@@ -184,6 +221,7 @@ function ImagePageFunction(props) {
         justify-content:center;
         align-items:center;
     `;
+    //if the image is still being translate, display a loading message, otherwise display a general welcome message
     var currentText = loadingText;
     if(text != null) {
         currentText = readyText;
