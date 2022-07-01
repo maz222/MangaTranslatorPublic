@@ -1,9 +1,6 @@
 import styled from 'styled-components';
 
 import {Link} from "react-router-dom";
-import axios from 'axios';
-
-import mangaImage from './Mangas.png';
 
 const Page = styled.div`
     width:100%;
@@ -46,43 +43,10 @@ const DemoLink = styled(Link)`
     margin:0;
 `
 
+/*
+    Home page of the app. Has links to the image upload page, and demo page
+*/
 function SplashPage(props) {
-    const handleDemo = () => {
-        const fileNames = ["Cover.jpg","IMG_189.jpg","IMG_190.jpg","IMG_191.jpg","IMG_192.jpg","IMG_193.jpg",
-        "IMG_194.jpg","IMG_195.jpg","IMG_196.jpg","IMG_197.jpg","IMG_198.jpg","IMG_199.jpg","IMG_200.jpg",
-        "IMG_201.jpg","IMG_202.jpg","IMG_203.jpg"];
-        var loadCount = fileNames.length;
-        var files = [];
-        for(var i in fileNames) {
-            //console.log(fileNames[i]);
-            axios.get("/API/demoFile",{params:{fileName:fileNames[i]},responseType:"blob"}).then((res) => {
-                //console.log(res);
-                //console.log(typeof res.data);
-                const fileReader = new FileReader();
-                fileReader.fileName = fileNames[i];
-                //console.log(fileNames[i]);
-                //console.log(fileReader.fileName);
-                fileReader.onload = (e) => {
-                    //console.log(e.target.fileName);
-                    loadCount -= 1;
-                    files.push([fileNames[i],e.target.result]);
-                    if(loadCount == 0) {
-                        files.sort((a,b) => (a[0] > b[0]) ? 1 : -1);
-                        //console.log(files);
-                    }
-                }
-                fileReader.onerror = (e) => {
-                    console.log(e);
-                    loadCount -= 1;
-                    if(loadCount == 0) {
-                        files.sort((a,b) => (a[0] > b[0]) ? 1 : -1);
-                        //console.log(files);
-                    }
-                }
-                fileReader.readAsDataURL(res.data);
-            });
-        }
-    };
     return(
         <Page>
             <h1>Manga Translator</h1>

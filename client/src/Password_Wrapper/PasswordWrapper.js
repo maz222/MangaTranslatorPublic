@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 import { useState } from 'react';
+import { useEffect } from 'react';
 
 //Simple blank, blue page for displaying the input
 const Page = styled.div`
@@ -39,7 +40,8 @@ function PasswordWrapper(props) {
     const [success,setSuccess] = useState(false);
     const checkPassword = (e) => {
         e.preventDefault();
-        if(password == props.password) {
+        if(password === props.password) {
+            sessionStorage.setItem('loggedIn',true);
             setSuccess(true);
         }
         else {
@@ -47,6 +49,12 @@ function PasswordWrapper(props) {
             setPassword("");
         }
     }
+    //on mount, check if the user has already logged in this session, and skip this page if they have
+    useEffect(() => {
+        if(sessionStorage.getItem('loggedIn')) {
+            setSuccess(true);
+        }
+    },[]);
     return(
             success ? 
                 props.child 

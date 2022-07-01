@@ -1,7 +1,5 @@
 import styled from 'styled-components';
 import { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom'
-import {Link} from "react-router-dom";
 import axios from 'axios';
 
 import ImageCanvas from './ImageCanvas';
@@ -23,6 +21,8 @@ const StyledPage = styled.div`
 //the top banner
 const Banner = styled.div`
     height:40px;
+    padding:10px;
+
     width:100%;
     background-color:#03050A;
     display:flex;
@@ -83,15 +83,23 @@ const TextBar = styled.div`
 `;
 
 /*
-    The over page element for viewing translated images.
+    The page element for viewing translated images.
     Contains a navigation bar, the canvas element (with image and text boxes), and a bottom bar for displaying the translated text
 
     Props:
-        (None, uses location to pass data instead)
-
-    Location State: 
-        images : [(Image),...] array of user images
-        imageIndex : (int) the index of the image currently being displayed
+        userImages: [{UserImage},...]
+            -UserImage: {imageFile:{rawFile,blob,image},imageText:{(Image Text)}}
+                -imageFile : the file data for the user image
+                    -rawFile : the raw user file
+                    -blob : parsed b24 data from the user file
+                    -image : (Image) created from the file data
+                -imageText : ([{raw,translated,rect},...]) an array of objects, each representing a text detection within the image, to be overlayed over the image
+                    - raw : (string) the raw, untranslated text detected in the image
+                    - translated : (string) the translated text
+                    - rect : ({x,y,width,height}) the positional data for the text. x/y are top left corner. in pixels.
+        setUserImages : (function) function for setting App's userImages
+        activeImageIndex : (int) the index of the image the user is currently interacting with
+        setActiveImageIndex : (function) function for setting App's activeImageIndex
 
     State:
         image: (Image) the current active image being displayed
@@ -105,41 +113,16 @@ const TextBar = styled.div`
         containerRef : (DOM Reference) a reference to the container element for the canvas (used to get baseDimensions)
 */
 function ImagePageFunction(props) {
-    const location = useLocation();
+    //const location = useLocation();
     const containerRef = useRef();
 
-    const [image, setImage] = useState(null);
-    const [text, setText] = useState(null);
+    //const [image, setImage] = useState(null);
+    //const [text, setText] = useState(null);
     const [activeText, setActiveText] = useState(null);
     const [APIError, setError] = useState(false);
     const [canvasDimensions, setCanvasDimentions] = useState(null)
     const [baseDimensions, setBaseDimensions] = useState(null);
 
-    //loads a single image using fileReader
-    const loadFile = (file) => {
-        setError(false);
-        var isCancel = false;
-        const fileReader = new FileReader();
-        fileReader.onload = (e) => {
-            var img = new Image;
-            //once the image has finished loading
-            img.onload = () => {
-                //resize the canvas to fit the image and container dimensions
-                setCanvasDimentions(calculateCanvasDimensions(img));
-                setImage(img);
-                //translate the actual image text
-                translateImage(file);
-            }
-            img.src = fileReader.result;
-        }
-        fileReader.readAsDataURL(file);
-        return() => {
-            isCancel = true;
-            if(fileReader.readyState === 1) {
-                fileReader.abort();
-            }
-        }
-    }
     //calls the API to get the translated text within an image
     const translateImage = (image) => {
         const API_URL = "/api/detectText";
@@ -164,46 +147,48 @@ function ImagePageFunction(props) {
                     res.data[d].translated = res2.data[d].translations[0].text;
                 }
             }).catch((error) => {
-                console.log(error);
                 setError(true);
             })
-            setText(res.data);
+            //update the overall app state with the translated text
+            var imageCopies = [...props.userImages];
+            imageCopies[props.activeImageIndex].imageText = res.data;
+            props.setUserImages(imageCopies);
         }).catch((error) => {
-            console.log(error);
             setError(true);
         });
     }
+
     //once the component has been mounted, use the canvas container reference to set the base dimensions used to calculate the canvas dimensions
     useEffect(() => {
         setActiveText(null);
-        setText(null);
         setBaseDimensions(containerRef.current.getBoundingClientRect());
     },[containerRef]);
+
     //onced the base dimensions have been set or changed, resize the canvas, then load and display the image in the canvas
     useEffect(() => {
-        console.log(location.state.imageIndex);
-        if(baseDimensions != null) {
-            loadFile(location.state.images[location.state.imageIndex]);
-        }
+        if(baseDimensions == null) {return;}
+        setCanvasDimentions(calculateCanvasDimensions(props.userImages[props.activeImageIndex].imageFile.image));
     },[baseDimensions]);
-    //if the location data changes (when user navigates to a new image), load and display the new image / adjust canvas
+
+    //when the user moves to a different image, refresh the canvas and translate the image if it hasn't been translated already
     useEffect(() => {
-        if(containerRef != null) {
-            setActiveText(null);
-            setText(null);
-            if(baseDimensions != null) {
-                loadFile(location.state.images[location.state.imageIndex]);
-            }
+        if(baseDimensions != null) {
+            setCanvasDimentions(calculateCanvasDimensions(props.userImages[props.activeImageIndex].imageFile.image));
         }
-    },[location])
+        if(props.userImages[props.activeImageIndex].imageText == null) {
+            translateImage(props.userImages[props.activeImageIndex].imageFile.rawFile);
+        }
+        setActiveText(null);
+    },[props.activeImageIndex]);
+
+    const canvasMargin = 50;
     //caculates the actual dimensions of the canvas element given the dimensions of it's container, and an image
     const calculateCanvasDimensions = (img) => {
         const parentDimensions = baseDimensions;
         //10px margin around the image
-        const margin = 10;
         //get the scaled aspect ratio of the image, scaled to maintain the width of the image
-        const aspectRatio = Math.min((parentDimensions.width-margin)/img.width,1);
-        const canvasDimensions = {width:Math.max(parentDimensions.width,img.width*aspectRatio+margin*2),height:Math.max(parentDimensions.height,img.height*aspectRatio+margin*2)};
+        const aspectRatio = Math.min((parentDimensions.width-canvasMargin*2)/img.width,1);
+        const canvasDimensions = {width:Math.max(parentDimensions.width,img.width*aspectRatio+canvasMargin*2),height:Math.max(parentDimensions.height,img.height*aspectRatio+canvasMargin*2)};
         return canvasDimensions;
     };
 
@@ -211,45 +196,41 @@ function ImagePageFunction(props) {
         setActiveText(text);
     }
     //the container element for the canvas, used to help manage the dimensions of the canvas via a DOM reference
-    const tempCanvasDimensions = canvasDimensions != null ? canvasDimensions : {width:null,height:null};
     const CanvasContainer = styled.div`
         background-color: rgb(200,200,200);
-        margin-top:40px;
-        height:${tempCanvasDimensions.height != null ? tempCanvasDimensions.height.toString() + "px;" : '95%;'}
+        margin-top:60px;
+        height:${canvasDimensions != null ? canvasDimensions.height.toString() + "px;" : '95%;'}
         width:100%;
         display:flex;
         justify-content:center;
         align-items:center;
     `;
-    //if the image is still being translate, display a loading message, otherwise display a general welcome message
-    var currentText = loadingText;
-    if(text != null) {
-        currentText = readyText;
-        if(activeText != null) {
-            currentText = activeText.translated;
-        }
-    }
+    //if the image is still being translated, display a loading message, otherwise display a general welcome message
+    var currentText = props.userImages[props.activeImageIndex].imageText == null ? loadingText : readyText;
+    currentText = activeText == null ? currentText : activeText.translated;
+
+    const currImage = props.userImages[props.activeImageIndex].imageFile.image;
     return(
         <StyledPage>
             <Banner>
                 <NavMenu>
-                    {location.state.imageIndex > 0 ? 
-                        <Link className="magnifyButton" to={"/viewImage"} state={{images:location.state.images,imageIndex:location.state.imageIndex-1}} style={{color:"white"}}>
+                    {props.activeImageIndex > 0 ? 
+                        <button onClick={() => {props.setActiveImageIndex(props.activeImageIndex-1)}}>
                             <i class="fa-solid fa-chevron-left"></i>
-                        </Link> 
+                        </button> 
                         : <i class="fa-solid fa-chevron-left"></i>
                     }
-                    <h3>{location.state.imageIndex+1 + " / " + location.state.images.length}</h3>
-                    {location.state.imageIndex < location.state.images.length-1 ? 
-                        <Link className="magnifyButton" to={"/viewImage"} state={{images:location.state.images,imageIndex:location.state.imageIndex+1}} style={{color:"white"}}>
+                    <h3>{props.activeImageIndex+1 + " / " + props.userImages.length}</h3>
+                    {props.activeImageIndex < props.userImages.length-1 ? 
+                        <button onClick={() => {props.setActiveImageIndex(props.activeImageIndex+1)}}>
                             <i class="fa-solid fa-chevron-right"></i>
-                        </Link>                   
+                        </button>                   
                         : <i class="fa-solid fa-chevron-right"></i>
                     }
                 </NavMenu>
             </Banner>
             <CanvasContainer ref={containerRef}>
-                {image != null ? <ImageCanvas image={image} text={text} clickCallback={updateActiveText} containerRef={containerRef} width={canvasDimensions.width} height={canvasDimensions.height}/> : null}
+                {canvasDimensions != null ? <ImageCanvas margin={canvasMargin} image={currImage} text={props.userImages[props.activeImageIndex].imageText} clickCallback={updateActiveText} containerRef={containerRef} width={canvasDimensions.width} height={canvasDimensions.height}/> : null}
             </CanvasContainer>
             <TextBar style={APIError ? {"color":"red"} : {"color":"black"}}>
                 <h4>{APIError ? "Translation services unavailable, please try again later" : currentText}</h4>

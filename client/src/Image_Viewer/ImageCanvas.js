@@ -23,18 +23,19 @@ function ImageCanvas(props) {
     const [activeText, setActiveText] = useState(null);
     //calculates the actual canvas dimensions, image dimensions (scaled), aspect ratio of the canvas, and the offset for the image (to center in the canvas)
     var calcDimensions = () => {
-        //place a 10 pixel margin around the image within the canvas
-        const margin = 10;
-        const aspectRatio = Math.min((props.width-margin)/props.image.width,1);
-        const canvasDimensions = {width:Math.max(props.width,props.image.width*aspectRatio+margin*2),height:Math.max(props.height,props.image.height*aspectRatio+margin*2)};
+        const margin = props.margin;
+        const aspectRatio = Math.min((props.width-margin*2)/(props.image.width),1);
+        //const canvasDimensions = {width:Math.max(props.width,props.image.width*aspectRatio+margin*2),height:Math.max(props.height,props.image.height*aspectRatio+margin*2)};
+        const canvasDimensions = {width:props.width,height:Math.max(props.height,props.image.height*aspectRatio+margin*2)};
         const imageSize = {width:props.image.width*aspectRatio, height:props.image.height*aspectRatio};
-        const imageOffset = {x:(canvasDimensions.width-imageSize.width+margin/2)/2, y:(canvasDimensions.height-imageSize.height+margin/2)/2};
+        const imageOffset = {x:(canvasDimensions.width-imageSize.width)/2, y:(canvasDimensions.height-imageSize.height)/2};
         return {canvasDimensions:canvasDimensions,aspectRatio:aspectRatio, imageSize:imageSize, imageOffset:imageOffset};
     }
     //renders the initial canvas upon mounting this component
     var renderCanvas = () => {
         const canvas = canvasRef.current;
         const canvasContext = canvas.getContext("2d");
+        canvasContext.lineWidth = 1;
         //get canvas and image dimensions
         const dimensions = calcDimensions();
         //draw the image centered in the canvas, and scaled to fit the width of the canvas
@@ -57,8 +58,7 @@ function ImageCanvas(props) {
         }
     }
     //re-renders the canvas (for when user clicks on a text box)
-    var redrawCanvas = () => {
-        //render the image and original boxes. if no box is active, exit
+    var redrawCanvas = () => {        //render the image and original boxes. if no box is active, exit
         renderCanvas();
         if(activeText == null) {
             return;
@@ -66,6 +66,7 @@ function ImageCanvas(props) {
         const dimensions = calcDimensions();
         const canvas = canvasRef.current;
         const canvasContext = canvas.getContext("2d");
+        
         canvasContext.beginPath();
         //draw a different colored text box to indicate that the user has clicked on / activated the text box
         const textRect = activeText.rect;
@@ -73,7 +74,8 @@ function ImageCanvas(props) {
             textRect.y*dimensions.aspectRatio + dimensions.imageOffset.y, 
             textRect.width*dimensions.aspectRatio, textRect.height*dimensions.aspectRatio);
         canvasContext.closePath();
-        canvasContext.strokeStyle = "#FFFF00";
+        canvasContext.strokeStyle = "#00FF00";
+        canvasContext.lineWidth = 4;
         canvasContext.stroke();
     }
     //handles when the user moves the cursor over the canvas. highlights text boxes when they are hovered over
@@ -82,8 +84,6 @@ function ImageCanvas(props) {
         //the text boxes are stored with raw pixel values relative to the size of the original image
         //since the image may be resized to fit the canvas, the cursor position must be adjusted 
         const margin = 10;
-        const canvas = canvasRef.current;
-        const canvasContext = canvas.getContext("2d");
         const dimensions = props.containerRef.current.getBoundingClientRect();
         const aspectRatio = Math.min((dimensions.width-margin)/props.image.width,(dimensions.height-margin)/props.image.height,1);
         const imageSize = [props.image.width*aspectRatio,props.image.height*aspectRatio];
@@ -97,7 +97,7 @@ function ImageCanvas(props) {
                 if(cursorPos.y >= textBox.y*aspectRatio && cursorPos.y <= (textBox.y+textBox.height)*aspectRatio) {
                     boxFound = true;
                     //if a box is found / hovered, update the active text box to it
-                    if(activeText == null || activeText.rect.x != textBox.x || activeText.rect.y != textBox.y || activeText.rect.width != textBox.width || activeText.rect.height != textBox.height) {
+                    if(activeText === null || activeText.rect.x !== textBox.x || activeText.rect.y !== textBox.y || activeText.rect.width !== textBox.width || activeText.rect.height !== textBox.height) {
                         setActiveText(props.text[t]);
                     }
                 }
@@ -119,7 +119,6 @@ function ImageCanvas(props) {
             props.clickCallback(activeText);
         }
     }
-    const canvasDimensions = calcDimensions().canvasDimensions;
     return(
         <canvas id="imageCanvas" ref={canvasRef} style={{backgroundColor:"#0F1831"}}
         width={props.width} height={props.height} 
