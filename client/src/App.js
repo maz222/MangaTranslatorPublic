@@ -39,8 +39,8 @@ function App() {
         <Routes>
           <Route path="/" element={<SplashPage/>}/>
           <Route path="/viewImage" element={<ImagePageFunction userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/>}/>
-          <Route path="/projectImages" element={<PasswordWrapper password={"gandalf"} child={<ProjectImages userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex} projectTitle={"Upload Images"}/>}/>}/>
-          <Route path="/demoImages" element={<PasswordWrapper password={"gandalf"} child={<DemoImagePage userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/>}/>}/>
+          <Route path="/projectImages" element={<PasswordWrapper password={"aPassword"} child={<ProjectImages userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex} projectTitle={"Upload Images"}/>}/>}/>
+          <Route path="/demoImages" element={<PasswordWrapper password={"aPassword"} child={<DemoImagePage userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/>}/>}/>
         </Routes>
       </PageContainer>
     </BrowserRouter>
