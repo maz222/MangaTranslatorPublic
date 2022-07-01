@@ -29,7 +29,5 @@ Hosted on heroku [here](https://translate-manga.herokuapp.com/) (may take a minu
 
 If you wish, you can remove the password screens from the app by editing out the React element for each Route in MangaTranslator/client/src/App.js
 ```javascript
-~~<Route path="/demoImages" element={<PasswordWrapper password={"myPassword"} child={<DemoImagePage userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/>}/>}/>~~
-
 <Route path="/demoImages" element={<DemoImagePage userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/>}/>
 ```
