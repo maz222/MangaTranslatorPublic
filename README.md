@@ -27,9 +27,9 @@ Hosted on heroku [here](https://translate-manga.herokuapp.com/) (may take a minu
 8. Type `npm start` into both consoles and hit enter
 9. After taking a second for npm to install / load everything, a tab should open in your browser with the app
 
-### While both Google Vision and Bing Translate have free tiers / plans, there is a usage limit. Please keep this in mind when using your app. ###
-
 If you wish, you can remove the password screens from the app by editing out the React element for each Route in MangaTranslator/client/src/App.js
 ```javascript
 <Route path="/demoImages" element={<DemoImagePage userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/>}/>
 ```
+
+### While both Google Vision and Bing Translate have free tiers / plans, there is a usage limit. Please keep this in mind when using your app. ###
