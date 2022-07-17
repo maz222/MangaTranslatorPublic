@@ -38,7 +38,10 @@ function App() {
       <PageContainer id="pageContainer">
         <Routes>
           <Route path="/" element={<SplashPage/>}/>
-          <Route path="/viewImage" element={<ImagePageFunction userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/>}/>
+          <Route path="/viewImage" element={userImages.length > 0 && activeImageIndex != null ?
+            <ImagePageFunction userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/> :
+            <SplashPage />
+            }/>          
           <Route path="/projectImages" element={<PasswordWrapper password={"aPassword"} child={<ProjectImages userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex} projectTitle={"Upload Images"}/>}/>}/>
           <Route path="/demoImages" element={<PasswordWrapper password={"aPassword"} child={<DemoImagePage userImages={userImages} setUserImages={setUserImages} activeImageIndex={activeImageIndex} setActiveImageIndex={setActiveImageIndex}/>}/>}/>
         </Routes>
